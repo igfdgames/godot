@@ -5,28 +5,6 @@
 /*                             GODOT ENGINE                               */
 /*                        https://godotengine.org                         */
 /**************************************************************************/
-/* Copyright (c) 2014-present Godot Engine contributors (see AUTHORS.md). */
-/* Copyright (c) 2007-2014 Juan Linietsky, Ariel Manzur.                  */
-/*                                                                        */
-/* Permission is hereby granted, free of charge, to any person obtaining  */
-/* a copy of this software and associated documentation files (the        */
-/* "Software"), to deal in the Software without restriction, including    */
-/* without limitation the rights to use, copy, modify, merge, publish,    */
-/* distribute, sublicense, and/or sell copies of the Software, and to     */
-/* permit persons to whom the Software is furnished to do so, subject to  */
-/* the following conditions:                                              */
-/*                                                                        */
-/* The above copyright notice and this permission notice shall be         */
-/* included in all copies or substantial portions of the Software.        */
-/*                                                                        */
-/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        */
-/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     */
-/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. */
-/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY   */
-/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,   */
-/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE      */
-/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
-/**************************************************************************/
 
 #include "project_manager.h"
 
@@ -95,11 +73,9 @@ void ProjectManager::_notification(int p_what) {
 
 			Window *main_window = get_window();
 			if (main_window) {
-				// Handle macOS fullscreen and extend-to-title changes.
 				main_window->connect("titlebar_changed", callable_mp(this, &ProjectManager::_titlebar_resized));
 			}
 
-			// Theme has already been created in the constructor, so we can skip that step.
 			_update_theme(true);
 		} break;
 
@@ -115,7 +91,6 @@ void ProjectManager::_notification(int p_what) {
 		} break;
 
 		case NOTIFICATION_TRANSLATION_CHANGED: {
-			// TRANSLATORS: This refers to the application where users manage their Godot projects.
 			SceneTree::get_singleton()->get_root()->set_title(GODOT_VERSION_NAME + String(" - ") + TTR("Project Manager", "Application"));
 
 			const String line1 = TTR("You don't have any projects yet.");
@@ -181,12 +156,10 @@ void ProjectManager::_build_icon_type_cache(Ref<Theme> p_theme) {
 // Main layout.
 
 void ProjectManager::_update_size_limits() {
-	const Size2 minimum_size = Size2(720, 450) * EDSCALE;
+	const Size2 minimum_size = Size2(360, 640) * EDSCALE; // Adjusted for mobile aspect ratio
 
-	// Define a minimum window size to prevent UI elements from overlapping or being cut off.
 	Window *w = Object::cast_to<Window>(SceneTree::get_singleton()->get_root());
 	if (w) {
-		// Calling Window methods this early doesn't sync properties with DS.
 		w->set_min_size(minimum_size);
 		DisplayServer::get_singleton()->window_set_min_size(minimum_size);
 	}
@@ -194,13 +167,10 @@ void ProjectManager::_update_size_limits() {
 
 	Rect2i screen_rect = DisplayServer::get_singleton()->screen_get_usable_rect(DisplayServer::get_singleton()->window_get_current_screen());
 	if (screen_rect.size != Vector2i()) {
-		// Center the window on the screen.
 		Vector2i window_position;
 		window_position.x = screen_rect.position.x + (screen_rect.size.x - real_size.x) / 2;
 		window_position.y = screen_rect.position.y + (screen_rect.size.y - real_size.y) / 2;
 
-		// Limit popup menus to prevent unusably long lists.
-		// We try to set it to half the screen resolution, but no smaller than the minimum window size.
 		Size2 half_screen_rect = (screen_rect.size * EDSCALE) / 2;
 		Size2 maximum_popup_size = half_screen_rect.max(minimum_size);
 		quick_settings_dialog->update_size_limits(maximum_popup_size);
@@ -234,7 +204,6 @@ void ProjectManager::_update_theme(bool p_skip_creation) {
 		}
 	}
 
-	// Update styles.
 	{
 		const int top_bar_separation = get_theme_constant("top_bar_separation", EditorStringName(Editor));
 		root_container->add_theme_constant_override("margin_left", top_bar_separation);
@@ -251,7 +220,6 @@ void ProjectManager::_update_theme(bool p_skip_creation) {
 		_set_main_view_icon(MAIN_VIEW_PROJECTS, get_editor_theme_icon("ProjectList"));
 		_set_main_view_icon(MAIN_VIEW_ASSETLIB, get_editor_theme_icon("AssetStore"));
 
-		// Project list.
 		{
 			loading_label->add_theme_font_override(SceneStringName(font), get_theme_font("bold", EditorStringName(EditorFonts)));
 			project_list_panel->add_theme_style_override(SceneStringName(panel), get_theme_stylebox("project_list", "ProjectManager"));
@@ -263,11 +231,9 @@ void ProjectManager::_update_theme(bool p_skip_creation) {
 			empty_list_online_warning->add_theme_font_override(SceneStringName(font), get_theme_font("italic", EditorStringName(EditorFonts)));
 			empty_list_online_warning->add_theme_color_override(SceneStringName(font_color), get_theme_color("font_placeholder_color", EditorStringName(Editor)));
 
-			// Top bar.
 			search_box->set_right_icon(get_editor_theme_icon("Search"));
 			quick_settings_button->set_button_icon(get_editor_theme_icon("Tools"));
 
-			// Sidebar.
 			create_btn->set_button_icon(get_editor_theme_icon("Add"));
 			import_btn->set_button_icon(get_editor_theme_icon("Load"));
 			scan_btn->set_button_icon(get_editor_theme_icon("Search"));
@@ -302,12 +268,9 @@ void ProjectManager::_update_theme(bool p_skip_creation) {
 			open_options_popup->set_item_icon(1, get_editor_theme_icon("NodeWarning"));
 		}
 
-		// Dialogs.
 		migration_guide_button->set_button_icon(get_editor_theme_icon("ExternalLink"));
 
-		// Asset store popup.
 		if (asset_library && EDITOR_GET("interface/theme/style") == "Classic") {
-			// Removes extra border margins.
 			asset_library->add_theme_style_override(SceneStringName(panel), memnew(StyleBoxEmpty));
 		}
 	}
@@ -327,6 +290,7 @@ Button *ProjectManager::_add_main_view(MainViewTab p_id, const String &p_name, c
 	toggle_button->set_toggle_mode(true);
 	toggle_button->set_button_group(main_view_toggles_group);
 	toggle_button->set_text(p_name);
+	toggle_button->set_h_size_flags(Control::SIZE_EXPAND_FILL); // Expand to fill bottom bar evenly
 	toggle_button->connect(SceneStringName(pressed), callable_mp(this, &ProjectManager::_select_main_view).bind((int)p_id));
 
 	main_view_toggles->add_child(toggle_button);
@@ -354,7 +318,6 @@ void ProjectManager::_set_main_view_icon(MainViewTab p_id, const Ref<Texture2D> 
 
 	if (p_icon.is_valid()) {
 		toggle_button->set_button_icon(p_icon);
-		// Make sure the control is updated if the icon is reimported.
 		p_icon->connect_changed(callable_mp((Control *)toggle_button, &Control::update_minimum_size));
 	} else {
 		toggle_button->set_button_icon(Ref<Texture2D>());
@@ -378,14 +341,8 @@ void ProjectManager::_select_main_view(int p_id) {
 
 #ifndef ANDROID_ENABLED
 	if (current_main_view == MAIN_VIEW_PROJECTS && search_box->is_inside_tree()) {
-		// Automatically grab focus when the user moves from the Templates tab
-		// back to the Projects tab.
-		// Needs to be deferred, otherwise the focus outline is always drawn.
 		callable_mp((Control *)search_box, &Control::grab_focus).call_deferred(true);
 	}
-
-	// The Templates tab's search field is focused on display in the asset
-	// library editor plugin code.
 #endif
 }
 
@@ -459,17 +416,10 @@ void ProjectManager::_show_error(const String &p_message, const Size2 &p_min_siz
 }
 
 void ProjectManager::_dim_window() {
-	// This method must be called before calling `get_tree()->quit()`.
-	// Otherwise, its effect won't be visible
-
-	// Dim the project manager window while it's quitting to make it clearer that it's busy.
-	// No transition is applied, as the effect needs to be visible immediately
 	float c = 0.5f;
 	Color dim_color = Color(c, c, c);
 	set_modulate(dim_color);
 }
-
-// Quick settings.
 
 void ProjectManager::_show_quick_settings() {
 	quick_settings_dialog->popup_centered(Size2(640, 200) * EDSCALE);
@@ -483,8 +433,6 @@ void ProjectManager::_restart_confirmed() {
 	_dim_window();
 	get_tree()->quit();
 }
-
-// Project list.
 
 void ProjectManager::_update_list_placeholder() {
 	if (project_list->get_project_count() > 0) {
@@ -537,7 +485,6 @@ void ProjectManager::_run_project_confirm() {
 
 		const String &path = selected_list[i].path;
 
-		// `.substr(6)` on `ProjectSettings::get_singleton()->get_imported_files_path()` strips away the leading "res://".
 		if (!DirAccess::exists(path.path_join(ProjectSettings::get_singleton()->get_imported_files_path().substr(6)))) {
 			_show_error(TTRC("Can't run project: Assets need to be imported first.\nPlease edit the project to trigger the initial import."));
 			continue;
@@ -560,8 +507,6 @@ void ProjectManager::_run_project_confirm() {
 }
 
 void ProjectManager::_open_selected_projects() {
-	// Show loading text to tell the user that the project manager is busy loading.
-	// This is especially important for the Web project manager.
 	loading_label->show();
 
 	const HashSet<String> &selected_list = project_list->get_selected_project_keys();
@@ -629,11 +574,10 @@ void ProjectManager::_open_selected_projects_check_warnings() {
 		return;
 	}
 
-	// Update the project settings or don't open.
 	const int config_version = project.version;
 	PackedStringArray unsupported_features = project.unsupported_features;
 
-	ask_update_label->set_horizontal_alignment(HORIZONTAL_ALIGNMENT_LEFT); // Reset in case of previous center align.
+	ask_update_label->set_horizontal_alignment(HORIZONTAL_ALIGNMENT_LEFT);
 	ask_update_backup->set_pressed(false);
 	full_convert_button->hide();
 	migration_guide_button->hide();
@@ -641,15 +585,13 @@ void ProjectManager::_open_selected_projects_check_warnings() {
 
 	ask_update_settings->get_ok_button()->set_text("OK");
 
-	// Check if the config_version property was empty or 0.
 	if (config_version == 0) {
 		ask_update_label->set_text(vformat(TTR("The selected project \"%s\" does not specify its supported Godot version in its configuration file (\"project.godot\").\n\nProject path: %s\n\nIf you proceed with opening it, it will be converted to Godot's current configuration file format.\n\nWarning: You won't be able to open the project with previous versions of the engine anymore."), project.project_name, project.path));
 		ask_update_settings->popup_centered(popup_min_size);
 		return;
 	}
-	// Check if we need to convert project settings from an earlier engine version.
 	if (config_version < ProjectSettings::CONFIG_VERSION) {
-		if (config_version == GODOT4_CONFIG_VERSION - 1 && ProjectSettings::CONFIG_VERSION == GODOT4_CONFIG_VERSION) { // Conversion from Godot 3 to 4.
+		if (config_version == GODOT4_CONFIG_VERSION - 1 && ProjectSettings::CONFIG_VERSION == GODOT4_CONFIG_VERSION) {
 			full_convert_button->show();
 			ask_update_label->set_text(vformat(TTR("The selected project \"%s\" was generated by Godot 3.x, and needs to be converted for Godot 4.x.\n\nProject path: %s\n\nYou have three options:\n- Convert only the configuration file (\"project.godot\"). Use this to open the project without attempting to convert its scenes, resources and scripts.\n- Convert the entire project including its scenes, resources and scripts (recommended if you are upgrading).\n- Do nothing and go back.\n\nWarning: If you select a conversion option, you won't be able to open the project with previous versions of the engine anymore."), project.project_name, project.path));
 			ask_update_settings->get_ok_button()->set_text(TTRC("Convert project.godot Only"));
@@ -660,15 +602,13 @@ void ProjectManager::_open_selected_projects_check_warnings() {
 		ask_update_backup->show();
 		migration_guide_button->show();
 		ask_update_settings->popup_centered(popup_min_size);
-		ask_update_settings->get_cancel_button()->grab_focus(); // To prevent accidents.
+		ask_update_settings->get_cancel_button()->grab_focus();
 		return;
 	}
-	// Check if the file was generated by a newer, incompatible engine version.
 	if (config_version > ProjectSettings::CONFIG_VERSION) {
 		_show_error(vformat(TTR("Can't open project \"%s\" at the following path:\n\n%s\n\nThe project settings were created by a newer engine version, whose settings are not compatible with this version."), project.project_name, project.path), popup_min_size);
 		return;
 	}
-	// Check if the project is using features not supported by this build of Godot.
 	if (!unsupported_features.is_empty()) {
 		String warning_message = "";
 		for (int i = 0; i < unsupported_features.size(); i++) {
@@ -702,7 +642,6 @@ void ProjectManager::_open_selected_projects_check_warnings() {
 		return;
 	}
 
-	// Open if the project is up-to-date.
 	_open_selected_projects();
 }
 
@@ -720,7 +659,6 @@ void ProjectManager::_open_selected_projects_check_recovery_mode() {
 
 	open_in_verbose_mode = false;
 	open_in_recovery_mode = false;
-	// Check if the project failed to load during last startup.
 	if (project.recovery_mode) {
 		_open_recovery_mode_ask(false);
 		return;
@@ -740,7 +678,6 @@ void ProjectManager::_open_selected_projects_with_migration() {
 
 #ifndef DISABLE_DEPRECATED
 	if (project_list->get_selected_projects().size() == 1) {
-		// Only migrate if a single project is opened.
 		_minor_project_migrate();
 	}
 #endif
@@ -826,7 +763,6 @@ void ProjectManager::_erase_project() {
 	}
 
 	erase_ask_label->set_text(confirm_message);
-	//delete_project_contents->set_pressed(false);
 	erase_ask->popup_centered();
 }
 
@@ -872,7 +808,7 @@ void ProjectManager::_update_project_buttons() {
 
 void ProjectManager::_open_options_popup() {
 	Rect2 rect = open_btn_container->get_screen_rect();
-	rect.position.y += rect.size.height;
+	rect.position.y -= open_options_popup->get_size().height; // Modified to popup upwards from bottom bar
 	open_options_popup->set_size(Size2(rect.size.width, 0));
 	open_options_popup->set_position(rect.position);
 
@@ -882,7 +818,6 @@ void ProjectManager::_open_options_popup() {
 void ProjectManager::_open_recovery_mode_ask(bool manual) {
 	String recovery_mode_details;
 
-	// Only show the initial crash preamble if this popup wasn't manually triggered.
 	if (!manual) {
 		recovery_mode_details +=
 				TTR("It looks like Godot crashed when opening this project the last time. If you're having problems editing this project, you can try to open it in Recovery Mode.") +
@@ -917,11 +852,11 @@ void ProjectManager::_on_projects_updated() {
 
 void ProjectManager::_on_open_options_selected(int p_option) {
 	switch (p_option) {
-		case 0: // Edit in verbose mode.
+		case 0:
 			open_in_verbose_mode = true;
 			_open_selected_projects_check_warnings();
 			break;
-		case 1: // Edit in recovery mode.
+		case 1:
 			_open_recovery_mode_ask(true);
 			break;
 	}
@@ -983,9 +918,6 @@ void ProjectManager::_on_search_term_changed(const String &p_term) {
 	project_list->set_search_term(p_term);
 	project_list->sort_projects();
 
-	// Select the first visible project in the list.
-	// This makes it possible to open a project without ever touching the mouse,
-	// as the search field is automatically focused on startup.
 	project_list->select_first_visible_project();
 	_update_project_buttons();
 }
@@ -1058,7 +990,7 @@ void ProjectManager::_apply_project_tags() {
 		memdelete(cfg);
 		tag_edit_error->set_text(vformat(TTR("Couldn't load project at '%s'. It may be missing or corrupted."), project_godot));
 		tag_edit_error->show();
-		callable_mp((Window *)tag_manage_dialog, &Window::show).call_deferred(); // Make sure the dialog does not disappear.
+		callable_mp((Window *)tag_manage_dialog, &Window::show).call_deferred();
 		return;
 	} else {
 		tags.sort();
@@ -1091,7 +1023,6 @@ void ProjectManager::_set_new_tag_name(const String p_name) {
 
 	bool was_underscore = false;
 	for (const char32_t &c : p_name.span()) {
-		// Treat spaces as underscores, as we convert spaces to underscores automatically in the tag input field.
 		if (c == '_' || c == ' ') {
 			if (was_underscore) {
 				tag_error->set_text(TTRC("Tag name can't contain consecutive underscores or spaces."));
@@ -1118,10 +1049,8 @@ void ProjectManager::_create_new_tag() {
 	if (!tag_error->get_text().is_empty()) {
 		return;
 	}
-	create_tag_dialog->hide(); // When using text_submitted, need to hide manually.
+	create_tag_dialog->hide();
 
-	// Enforce a valid tag name (no spaces, lowercase only) automatically.
-	// The project manager displays underscores as spaces, and capitalization is performed automatically.
 	const String new_tag = new_tag_name->get_text().strip_edges().to_lower().replace_char(' ', '_');
 	add_new_tag(new_tag);
 	_add_project_tag(new_tag);
@@ -1144,7 +1073,6 @@ void ProjectManager::_minor_project_migrate() {
 	const ProjectList::Item migrated_project = project_list->get_selected_projects()[0];
 
 	if (version_convert_feature.begins_with("4.3")) {
-		// Migrate layout after scale changes.
 		const float edscale = EDSCALE;
 		if (edscale != 1.0) {
 			Ref<ConfigFile> layout_file;
@@ -1220,9 +1148,6 @@ void ProjectManager::shortcut_input(const Ref<InputEvent> &p_ev) {
 			return;
 		}
 
-		// Pressing Command + Q quits the Project Manager
-		// This is handled by the platform implementation on macOS,
-		// so only define the shortcut on other platforms
 #ifndef MACOS_ENABLED
 		if (k->get_keycode_with_modifiers() == (KeyModifierMask::META | Key::Q)) {
 			_dim_window();
@@ -1281,7 +1206,6 @@ void ProjectManager::shortcut_input(const Ref<InputEvent> &p_ev) {
 }
 
 void ProjectManager::_files_dropped(PackedStringArray p_files) {
-	// TODO: Support installing multiple ZIPs at the same time?
 	if (p_files.size() == 1 && p_files[0].ends_with(".zip")) {
 		const String &file = p_files[0];
 		_install_project(file, file.get_file().get_basename().capitalize());
@@ -1294,7 +1218,7 @@ void ProjectManager::_files_dropped(PackedStringArray p_files) {
 		const String &file = p_files[i];
 		folders_set.insert(da->dir_exists(file) ? file : file.get_base_dir());
 	}
-	ERR_FAIL_COND(folders_set.is_empty()); // This can't really happen, we consume every dropped file path above.
+	ERR_FAIL_COND(folders_set.is_empty()); 
 
 	PackedStringArray folders;
 	for (const String &E : folders_set) {
@@ -1328,7 +1252,6 @@ void ProjectManager::_open_donate_page() {
 ProjectManager::ProjectManager() {
 	singleton = this;
 
-	// Turn off some servers we aren't going to be using in the Project Manager.
 	NavigationServer3D::get_singleton()->set_active(false);
 	PhysicsServer3D::get_singleton()->set_active(false);
 	PhysicsServer2D::get_singleton()->set_active(false);
@@ -1338,7 +1261,7 @@ ProjectManager::ProjectManager() {
 		if (!EditorSettings::get_singleton()) {
 			EditorSettings::create();
 		}
-		EditorSettings::get_singleton()->set_optimize_save(false); // Just write settings as they come.
+		EditorSettings::get_singleton()->set_optimize_save(false);
 
 		{
 			bool agile_input_event_flushing = EDITOR_GET("input/buffering/agile_event_flushing");
@@ -1352,7 +1275,6 @@ ProjectManager::ProjectManager() {
 
 		switch (display_scale) {
 			case 0:
-				// Try applying a suitable display scale automatically.
 				EditorScale::set_scale(EditorSettings::get_auto_display_scale());
 				break;
 			case 1:
@@ -1384,8 +1306,7 @@ ProjectManager::ProjectManager() {
 		FileDialog::set_default_display_mode((FileDialog::DisplayMode)EDITOR_GET("filesystem/file_dialog/display_mode").operator int());
 
 		int swap_cancel_ok = EDITOR_GET("interface/editor/appearance/accept_dialog_cancel_ok_buttons");
-		if (swap_cancel_ok != 0) { // 0 is auto, set in register_scene based on DisplayServer.
-			// Swap on means OK first.
+		if (swap_cancel_ok != 0) {
 			AcceptDialog::set_swap_cancel_ok(swap_cancel_ok == 2);
 		}
 
@@ -1414,7 +1335,6 @@ ProjectManager::ProjectManager() {
 	}
 
 	// Project manager layout.
-
 	background_panel = memnew(Panel);
 	add_child(background_panel);
 	background_panel->set_anchors_and_offsets_preset(Control::PRESET_FULL_RECT);
@@ -1434,7 +1354,6 @@ ProjectManager::ProjectManager() {
 		main_vbox->add_child(title_bar);
 
 		if (can_expand) {
-			// Add spacer to avoid other controls under window minimize/maximize/close buttons (left side).
 			left_menu_spacer = memnew(Control);
 			left_menu_spacer->set_mouse_filter(Control::MOUSE_FILTER_PASS);
 			title_bar->add_child(left_menu_spacer);
@@ -1443,7 +1362,6 @@ ProjectManager::ProjectManager() {
 		HBoxContainer *left_hbox = memnew(HBoxContainer);
 		left_hbox->set_alignment(BoxContainer::ALIGNMENT_BEGIN);
 		left_hbox->set_h_size_flags(Control::SIZE_EXPAND_FILL);
-		left_hbox->set_stretch_ratio(1.0);
 		title_bar->add_child(left_hbox);
 
 		title_bar_logo = memnew(Button);
@@ -1455,7 +1373,7 @@ ProjectManager::ProjectManager() {
 		bool global_menu = !bool(EDITOR_GET("interface/editor/appearance/use_embedded_menu")) && NativeMenu::get_singleton()->has_feature(NativeMenu::FEATURE_GLOBAL_MENU);
 		if (global_menu) {
 			MenuBar *main_menu_bar = memnew(MenuBar);
-			main_menu_bar->set_start_index(0); // Main menu, add to the start of global menu.
+			main_menu_bar->set_start_index(0);
 			main_menu_bar->set_prefer_global_menu(true);
 			left_hbox->add_child(main_menu_bar);
 
@@ -1472,33 +1390,12 @@ ProjectManager::ProjectManager() {
 				main_menu_bar->add_child(help_menu);
 			}
 		}
-		if (can_expand) {
-			// Spacer to center main toggles.
-			left_spacer = memnew(Control);
-			left_spacer->set_mouse_filter(Control::MOUSE_FILTER_PASS);
-			title_bar->add_child(left_spacer);
-		}
 
-		main_view_toggles = memnew(HBoxContainer);
-		main_view_toggles->set_alignment(BoxContainer::ALIGNMENT_CENTER);
-		main_view_toggles->set_h_size_flags(Control::SIZE_EXPAND_FILL);
-		main_view_toggles->set_stretch_ratio(2.0);
-		title_bar->add_child(main_view_toggles);
-		title_bar->set_center_control(main_view_toggles);
-
-		if (can_expand) {
-			// Spacer to center main toggles.
-			right_spacer = memnew(Control);
-			right_spacer->set_mouse_filter(Control::MOUSE_FILTER_PASS);
-			title_bar->add_child(right_spacer);
-		}
-
-		main_view_toggles_group.instantiate();
+		// (Mobile Redesign) Toggles are removed from here and moved to a Bottom Navigation Bar later.
 
 		HBoxContainer *right_hbox = memnew(HBoxContainer);
 		right_hbox->set_alignment(BoxContainer::ALIGNMENT_END);
 		right_hbox->set_h_size_flags(Control::SIZE_EXPAND_FILL);
-		right_hbox->set_stretch_ratio(1.0);
 		title_bar->add_child(right_hbox);
 
 		quick_settings_button = memnew(Button);
@@ -1508,7 +1405,6 @@ ProjectManager::ProjectManager() {
 		quick_settings_button->connect(SceneStringName(pressed), callable_mp(this, &ProjectManager::_show_quick_settings));
 
 		if (can_expand) {
-			// Add spacer to avoid other controls under the window minimize/maximize/close buttons (right side).
 			right_menu_spacer = memnew(Control);
 			right_menu_spacer->set_mouse_filter(Control::MOUSE_FILTER_PASS);
 			title_bar->add_child(right_menu_spacer);
@@ -1519,55 +1415,68 @@ ProjectManager::ProjectManager() {
 	main_view_container->set_v_size_flags(Control::SIZE_EXPAND_FILL);
 	main_vbox->add_child(main_view_container);
 
+	// (Mobile Redesign) Initialize the bottom navigation group here so it's ready for _add_main_view
+	main_view_toggles_group.instantiate();
+	main_view_toggles = memnew(HBoxContainer);
+	main_view_toggles->set_alignment(BoxContainer::ALIGNMENT_CENTER);
+	main_view_toggles->set_h_size_flags(Control::SIZE_EXPAND_FILL);
+
 	// Project list view.
 	{
 		local_projects_vb = memnew(VBoxContainer);
 		local_projects_vb->set_name("LocalProjectsTab");
 		_add_main_view(MAIN_VIEW_PROJECTS, TTRC("Projects"), Ref<Texture2D>(), local_projects_vb);
 
-		// Project list's top bar.
+		// Project list's top bar (Mobile Redesign: Stacked vertical layout)
 		{
-			HBoxContainer *hb = memnew(HBoxContainer);
-			hb->set_h_size_flags(Control::SIZE_EXPAND_FILL);
-			local_projects_vb->add_child(hb);
+			VBoxContainer *top_actions_vb = memnew(VBoxContainer);
+			top_actions_vb->set_h_size_flags(Control::SIZE_EXPAND_FILL);
+			local_projects_vb->add_child(top_actions_vb);
+
+			HBoxContainer *hb_buttons = memnew(HBoxContainer);
+			hb_buttons->set_alignment(BoxContainer::ALIGNMENT_CENTER);
+			top_actions_vb->add_child(hb_buttons);
 
 			create_btn = memnew(Button);
 			create_btn->set_text(TTRC("Create"));
 			create_btn->set_shortcut(ED_SHORTCUT("project_manager/new_project", TTRC("New Project"), KeyModifierMask::CMD_OR_CTRL | Key::N));
 			create_btn->connect(SceneStringName(pressed), callable_mp(this, &ProjectManager::_new_project));
-			hb->add_child(create_btn);
+			hb_buttons->add_child(create_btn);
 
 			import_btn = memnew(Button);
 			import_btn->set_text(TTRC("Import"));
 			import_btn->set_shortcut(ED_SHORTCUT("project_manager/import_project", TTRC("Import Project"), KeyModifierMask::CMD_OR_CTRL | Key::I));
 			import_btn->connect(SceneStringName(pressed), callable_mp(this, &ProjectManager::_import_project));
-			hb->add_child(import_btn);
+			hb_buttons->add_child(import_btn);
 
 			scan_btn = memnew(Button);
 			scan_btn->set_text(TTRC("Scan"));
 			scan_btn->set_shortcut(ED_SHORTCUT("project_manager/scan_projects", TTRC("Scan Projects"), KeyModifierMask::CMD_OR_CTRL | Key::S));
 			scan_btn->connect(SceneStringName(pressed), callable_mp(this, &ProjectManager::_scan_projects));
-			hb->add_child(scan_btn);
+			hb_buttons->add_child(scan_btn);
 
 			loading_label = memnew(Label(TTRC("Loading, please wait...")));
 			loading_label->set_accessibility_live(AccessibilityServerEnums::AccessibilityLiveMode::LIVE_ASSERTIVE);
 			loading_label->set_h_size_flags(Control::SIZE_EXPAND_FILL);
 			loading_label->hide();
-			hb->add_child(loading_label);
+			top_actions_vb->add_child(loading_label);
+
+			HBoxContainer *hb_search = memnew(HBoxContainer);
+			hb_search->set_h_size_flags(Control::SIZE_EXPAND_FILL);
+			top_actions_vb->add_child(hb_search);
 
 			search_box = memnew(LineEdit);
 			search_box->set_placeholder(TTRC("Filter Projects"));
 			search_box->set_accessibility_name(TTRC("Filter Projects"));
-			search_box->set_tooltip_text(TTRC("This field filters projects by name and last path component.\nTo filter projects by name and full path, the query must contain at least one `/` character."));
 			search_box->set_clear_button_enabled(true);
 			search_box->connect(SceneStringName(text_changed), callable_mp(this, &ProjectManager::_on_search_term_changed));
 			search_box->connect(SceneStringName(text_submitted), callable_mp(this, &ProjectManager::_on_search_term_submitted));
 			search_box->set_h_size_flags(Control::SIZE_EXPAND_FILL);
-			hb->add_child(search_box);
+			hb_search->add_child(search_box);
 
 			sort_label = memnew(Label);
 			sort_label->set_text(TTRC("Sort:"));
-			hb->add_child(sort_label);
+			hb_search->add_child(sort_label);
 
 			filter_option = memnew(OptionButton);
 			filter_option->set_clip_text(true);
@@ -1576,7 +1485,7 @@ ProjectManager::ProjectManager() {
 			filter_option->set_stretch_ratio(0.3);
 			filter_option->set_accessibility_name(TTRC("Sort:"));
 			filter_option->connect(SceneStringName(item_selected), callable_mp(this, &ProjectManager::_on_order_option_changed));
-			hb->add_child(filter_option);
+			hb_search->add_child(filter_option);
 
 			filter_option->add_item(TTRC("Last Edited"));
 			filter_option->add_item(TTRC("Name"));
@@ -1584,15 +1493,16 @@ ProjectManager::ProjectManager() {
 			filter_option->add_item(TTRC("Tags"));
 		}
 
-		// Project list and its sidebar.
+		// Project list and its bottom action bar (Mobile Redesign: VBox instead of HBox)
 		{
-			HBoxContainer *project_list_hbox = memnew(HBoxContainer);
-			local_projects_vb->add_child(project_list_hbox);
-			project_list_hbox->set_v_size_flags(Control::SIZE_EXPAND_FILL);
+			VBoxContainer *project_list_vbox = memnew(VBoxContainer);
+			local_projects_vb->add_child(project_list_vbox);
+			project_list_vbox->set_v_size_flags(Control::SIZE_EXPAND_FILL);
 
 			project_list_panel = memnew(PanelContainer);
+			project_list_panel->set_v_size_flags(Control::SIZE_EXPAND_FILL);
 			project_list_panel->set_h_size_flags(Control::SIZE_EXPAND_FILL);
-			project_list_hbox->add_child(project_list_panel);
+			project_list_vbox->add_child(project_list_panel);
 
 			project_list = memnew(ProjectList);
 			project_list->set_horizontal_scroll_mode(ScrollContainer::SCROLL_MODE_DISABLED);
@@ -1652,32 +1562,27 @@ ProjectManager::ProjectManager() {
 				empty_list_placeholder->add_child(empty_list_online_warning);
 			}
 
-			// The side bar with the edit, run, rename, etc. buttons.
-			VBoxContainer *project_list_sidebar = memnew(VBoxContainer);
-			project_list_sidebar->set_custom_minimum_size(Size2(120, 120));
-			project_list_hbox->add_child(project_list_sidebar);
+			// (Mobile Redesign) Action bar at the bottom instead of sidebar
+			project_list_vbox->add_child(memnew(HSeparator));
 
-			project_list_sidebar->add_child(memnew(HSeparator));
+			ScrollContainer *action_scroll = memnew(ScrollContainer);
+			action_scroll->set_horizontal_scroll_mode(ScrollContainer::SCROLL_MODE_AUTO);
+			action_scroll->set_vertical_scroll_mode(ScrollContainer::SCROLL_MODE_DISABLED);
+			action_scroll->set_custom_minimum_size(Size2(0, 50 * EDSCALE)); 
+			project_list_vbox->add_child(action_scroll);
 
-			ScrollContainer *sidebar_scroll_containter = memnew(ScrollContainer);
-			sidebar_scroll_containter->set_horizontal_scroll_mode(ScrollContainer::SCROLL_MODE_DISABLED);
-			sidebar_scroll_containter->set_v_size_flags(Control::SIZE_EXPAND_FILL);
-			project_list_sidebar->add_child(sidebar_scroll_containter);
-			VBoxContainer *sidebar_buttons_containter = memnew(VBoxContainer);
-			sidebar_scroll_containter->add_child(sidebar_buttons_containter);
+			HBoxContainer *action_buttons = memnew(HBoxContainer);
+			action_buttons->set_v_size_flags(Control::SIZE_EXPAND_FILL);
+			action_scroll->add_child(action_buttons);
 
 			open_btn_container = memnew(HBoxContainer);
-			open_btn_container->set_anchors_preset(Control::PRESET_FULL_RECT);
-			sidebar_buttons_containter->add_child(open_btn_container);
+			action_buttons->add_child(open_btn_container);
 
 			open_btn = memnew(Button);
 			open_btn->set_text(TTRC("Edit"));
 			open_btn->set_shortcut(ED_SHORTCUT("project_manager/edit_project", TTRC("Edit Project"), KeyModifierMask::CMD_OR_CTRL | Key::E));
 			open_btn->connect(SceneStringName(pressed), callable_mp(this, &ProjectManager::_open_selected_projects_check_recovery_mode));
-			open_btn->set_h_size_flags(Control::SIZE_EXPAND_FILL);
 			open_btn_container->add_child(open_btn);
-
-			open_btn_container->add_child(memnew(VSeparator));
 
 			open_options_btn = memnew(Button);
 			open_options_btn->set_accessibility_name(TTRC("Options"));
@@ -1691,46 +1596,47 @@ ProjectManager::ProjectManager() {
 			open_options_popup->connect(SceneStringName(id_pressed), callable_mp(this, &ProjectManager::_on_open_options_selected));
 			open_options_btn->add_child(open_options_popup);
 
-			open_btn_container->set_custom_minimum_size(Size2(120, open_btn->get_combined_minimum_size().y));
+			action_buttons->add_child(memnew(VSeparator));
 
 			run_btn = memnew(Button);
 			run_btn->set_text(TTRC("Run"));
 			run_btn->set_shortcut(ED_SHORTCUT("project_manager/run_project", TTRC("Run Project"), KeyModifierMask::CMD_OR_CTRL | Key::R));
 			run_btn->connect(SceneStringName(pressed), callable_mp(this, &ProjectManager::_run_project));
-			sidebar_buttons_containter->add_child(run_btn);
+			action_buttons->add_child(run_btn);
 
 			rename_btn = memnew(Button);
 			rename_btn->set_text(TTRC("Rename"));
-			// The F2 shortcut isn't overridden with Enter on macOS as Enter is already used to edit a project.
 			rename_btn->set_shortcut(ED_SHORTCUT("project_manager/rename_project", TTRC("Rename Project"), Key::F2));
 			rename_btn->connect(SceneStringName(pressed), callable_mp(this, &ProjectManager::_rename_project));
-			sidebar_buttons_containter->add_child(rename_btn);
+			action_buttons->add_child(rename_btn);
 
 			duplicate_btn = memnew(Button);
 			duplicate_btn->set_text(TTRC("Duplicate"));
 			duplicate_btn->connect(SceneStringName(pressed), callable_mp(this, &ProjectManager::_duplicate_project));
-			sidebar_buttons_containter->add_child(duplicate_btn);
+			action_buttons->add_child(duplicate_btn);
 
 			manage_tags_btn = memnew(Button);
-			manage_tags_btn->set_text(TTRC("Manage Tags"));
+			manage_tags_btn->set_text(TTRC("Tags"));
 			manage_tags_btn->set_shortcut(ED_SHORTCUT("project_manager/project_tags", TTRC("Manage Tags"), KeyModifierMask::CMD_OR_CTRL | Key::T));
-			sidebar_buttons_containter->add_child(manage_tags_btn);
+			action_buttons->add_child(manage_tags_btn);
+			
+			action_buttons->add_child(memnew(VSeparator));
 
 			erase_btn = memnew(Button);
 			erase_btn->set_text(TTRC("Remove"));
 			erase_btn->set_shortcut(ED_SHORTCUT("project_manager/remove_project", TTRC("Remove Project"), Key::KEY_DELETE));
 			erase_btn->connect(SceneStringName(pressed), callable_mp(this, &ProjectManager::_erase_project));
-			sidebar_buttons_containter->add_child(erase_btn);
+			action_buttons->add_child(erase_btn);
 
 			erase_missing_btn = memnew(Button);
-			erase_missing_btn->set_text(TTRC("Remove Missing"));
+			erase_missing_btn->set_text(TTRC("Rem. Missing"));
 			erase_missing_btn->connect(SceneStringName(pressed), callable_mp(this, &ProjectManager::_erase_missing_projects));
-			sidebar_buttons_containter->add_child(erase_missing_btn);
+			action_buttons->add_child(erase_missing_btn);
 
 			donate_btn = memnew(Button);
 			donate_btn->set_text(TTRC("Donate"));
 			donate_btn->connect(SceneStringName(pressed), callable_mp(this, &ProjectManager::_open_donate_page));
-			project_list_sidebar->add_child(donate_btn);
+			action_buttons->add_child(donate_btn);
 		}
 	}
 
@@ -1748,6 +1654,14 @@ ProjectManager::ProjectManager() {
 		asset_library_toggle->set_tooltip_text(TTRC("Asset Store not available (due to using Web editor, or because SSL support disabled)."));
 	}
 
+	// (Mobile Redesign) Bottom Navigation Bar for switching views
+	{
+		PanelContainer *bottom_nav_panel = memnew(PanelContainer);
+		bottom_nav_panel->add_theme_style_override(SceneStringName(panel), get_theme_stylebox("panel_container", "ProjectManager"));
+		bottom_nav_panel->add_child(main_view_toggles);
+		main_vbox->add_child(bottom_nav_panel);
+	}
+
 	// Footer bar.
 	{
 		HBoxContainer *footer_bar = memnew(HBoxContainer);
@@ -1762,7 +1676,6 @@ ProjectManager::ProjectManager() {
 #endif
 
 		EditorVersionButton *version_btn = memnew(EditorVersionButton(EditorVersionButton::FORMAT_WITH_BUILD));
-		// Fade the version label to be less prominent, but still readable.
 		version_btn->set_self_modulate(Color(1, 1, 1, 0.6));
 		footer_bar->add_child(version_btn);
 	}
@@ -1797,12 +1710,6 @@ ProjectManager::ProjectManager() {
 		erase_ask_label = memnew(Label);
 		erase_ask_label->set_focus_mode(FOCUS_ACCESSIBILITY);
 		erase_ask_vb->add_child(erase_ask_label);
-
-		// Comment out for now until we have a better warning system to
-		// ensure users delete their project only.
-		//delete_project_contents = memnew(CheckBox);
-		//delete_project_contents->set_text(TTRC("Also delete project contents (no undo!)"));
-		//erase_ask_vb->add_child(delete_project_contents);
 
 		multi_open_ask = memnew(ConfirmationDialog);
 		multi_open_ask->set_ok_button_text(TTRC("Edit"));
@@ -1970,7 +1877,6 @@ ProjectManager::ProjectManager() {
 		initialized = true;
 	}
 
-	// Extend menu bar to window title.
 	if (can_expand) {
 		DisplayServer::get_singleton()->process_events();
 		DisplayServer::get_singleton()->window_set_flag(DisplayServerEnums::WINDOW_FLAG_EXTEND_TO_TITLE, true, DisplayServerEnums::MAIN_WINDOW_ID);
